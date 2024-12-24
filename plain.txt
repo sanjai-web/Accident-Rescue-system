@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driver Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            padding: 20px;
+            background-color: white;
+            margin: 20px auto;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        label {
+            font-weight: bold;
+        }
+        .form-group {
+            margin: 10px 0;
+        }
+        input {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome, Driver!</h1>
+        <div id="details">
+            <div class="form-group">
+                <label for="name">Name:</label>
+                <input type="text" id="name" disabled>
+            </div>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="text" id="email" disabled>
+            </div>
+            <div class="form-group">
+                <label for="mobile">Mobile:</label>
+                <input type="text" id="mobile" disabled>
+            </div>
+            <div class="form-group">
+                <label for="places">Places:</label>
+                <input type="text" id="places" disabled>
+            </div>
+        </div>
+        <button class="button" id="edit-button">Edit</button>
+        <button class="button" id="save-button" style="display: none;">Save</button>
+        <button class="button" id="logout-button">Logout</button>
+    </div>
+
+    <script>
+        // Fetch driver data from localStorage
+        const driverData = JSON.parse(localStorage.getItem('driverData'));
+
+        const nameField = document.getElementById('name');
+        const emailField = document.getElementById('email');
+        const mobileField = document.getElementById('mobile');
+        const placesField = document.getElementById('places');
+        const editButton = document.getElementById('edit-button');
+        const saveButton = document.getElementById('save-button');
+
+        if (driverData) {
+            // Display driver details
+            nameField.value = driverData.name;
+            emailField.value = driverData.email;
+            mobileField.value = driverData.mobile;
+            placesField.value = driverData.places.join(', ');
+        } else {
+            // If no data found, redirect to login
+            alert('Please log in first.');
+            window.location.href = "DriverLogin.html";
+        }
+
+        // Enable edit mode
+        editButton.addEventListener('click', () => {
+            nameField.disabled = false;
+            mobileField.disabled = false;
+            placesField.disabled = false;
+            editButton.style.display = 'none';
+            saveButton.style.display = 'block';
+        });
+
+        // Save changes
+        saveButton.addEventListener('click', () => {
+            const updatedData = {
+                ...driverData,
+                name: nameField.value,
+                mobile: mobileField.value,
+                places: placesField.value.split(',').map(place => place.trim())
+            };
+
+            // Update localStorage
+            localStorage.setItem('driverData', JSON.stringify(updatedData));
+
+            // Optionally, update Firebase (uncomment below if Firebase write is needed)
+            /*
+            const database = firebase.database();
+            database.ref(`drivers/${driverData.id}`).update(updatedData)
+                .then(() => alert('Details updated successfully!'))
+                .catch(error => console.error('Error updating data:', error));
+            */
+
+            alert('Details updated successfully!');
+
+            nameField.disabled = true;
+            mobileField.disabled = true;
+            placesField.disabled = true;
+            editButton.style.display = 'block';
+            saveButton.style.display = 'none';
+        });
+
+        // Logout button functionality
+        document.getElementById('logout-button').addEventListener('click', () => {
+            localStorage.removeItem('driverData'); // Clear driver data
+            window.location.href = "DriverLogin.html"; // Redirect to login page
+        });
+    </script>
+</body>
+</html>

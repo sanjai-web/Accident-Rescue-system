@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <title>Accident Rescue</title>
+</head>
+<body>
+    <header>
+        <div class="wrapper header-content">
+            <div class="logo">
+                <img src="./Images/logo.png" alt="Driqars Logo">
+            </div>
+        </div>
+    </header>
+
+    <div class="container wrapper">
+        <h1>Select Your Rescue Role</h1>
+        <p>Empowering Heroes, Saving Lives: Every Second Counts, Every Action Matters</p>
+        <div class="options">
+            <div class="option" onclick="navigateToNextPageAccident()">
+                <img src="./Images/accident.png" alt="Accident Location">
+                <h2>Accident</h2>
+                <p>An ounce of prevention is worth a pound of cure.</p>
+            </div>
+            
+            <div class="option" onclick="navigateToNextPageDriver()">
+                <img src="./Images/driver1.png" alt="Ambulance Driver">
+                <h2>Ambulance Driver</h2>
+                <p>Frontline Heroes Navigating Critical Moments</p>
+            </div>
+            
+            <div class="option" onclick="navigateToNextPageHospital()">
+                <img src="./Images/hos1.png" alt="Hospital Entry">
+                <h2>Hospital</h2>
+                <p>Prepare, Respond, Save: Hospital Coordination</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function navigateToNextPageDriver() {
+            window.location.href = '../Driver/DriverLogin.html';
+        }
+
+        function navigateToNextPageHospital() {
+            window.location.href = '../Hospital/HospitalLogin.html';
+        }
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCY5EEAIvuOZzWUWt9NXjEg8KNiM1T6iv4",
+            authDomain: "accident-detection-93371.firebaseapp.com",
+            databaseURL: "https://accident-detection-93371-default-rtdb.asia-southeast1.firebasedatabase.app/",
+            projectId: "accident-detection-93371",
+            storageBucket: "accident-detection-93371.appspot.com",
+            messagingSenderId: "297058775374",
+            appId: "1:297058775374:web:unique-app-id"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        // Function to get the next accident number
+        async function getNextAccidentNumber() {
+            const counterRef = firebase.database().ref('accidentCounter');
+            
+            try {
+                const snapshot = await counterRef.once('value');
+                let currentCounter = snapshot.val() || 0;
+                currentCounter++;
+                
+                // Update the counter
+                await counterRef.set(currentCounter);
+                return currentCounter;
+            } catch (error) {
+                console.error("Error getting accident number:", error);
+                return null;
+            }
+        }
+
+        async function navigateToNextPageAccident() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const { latitude, longitude } = position.coords;
+                    
+                    try {
+                        // Get the next accident number
+                        const accidentNumber = await getNextAccidentNumber();
+                        if (!accidentNumber) {
+                            throw new Error("Could not generate accident number");
+                        }
+
+                        // Create the accident ID
+                        const accidentId = `accident${accidentNumber}`;
+                        
+                        // Get current timestamp
+                        const timestamp = Date.now();
+                        
+                        // Send data to Firebase using the sequential ID
+                        const accidentRef = firebase.database().ref('accidents/' + accidentId);
+                        await accidentRef.set({
+                            accidentId: accidentId,
+                            latitude: latitude,
+                            longitude: longitude,
+                            timestamp: timestamp,
+                            status: 'active',
+                            responded: false  // Track if any driver has responded
+                        });
+                        
+                        alert(`Emergency services have been notified! Help is on the way.`);
+                    } catch (error) {
+                        alert(`Error reporting accident: ${error.message}`);
+                    }
+                },
+                (error) => {
+                    alert(`Error fetching location: ${error.message}`);
+                }
+            );
+        } else {
+            alert('Geolocation is not supported by your browser.');
+        }
+    }
+    </script>
+</body>
+</html>
+
+
+<style>
+    :root {
+        --primary-color: #2563eb;
+        --secondary-color: #60a5fa;
+        --text-dark: #1f2937;
+        --text-light: #6b7280;
+        --background-light: #f9fafb;
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--background-light);
+        color: var(--text-dark);
+        line-height: 1.6;
+    }
+
+    .wrapper {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px;
+    }
+
+    header {
+        background-color: white;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        height: 80px;
+        padding: 0 20px;
+    }
+
+    .logo img {
+        max-height: 50px;
+    }
+
+    .container {
+        text-align: center;
+        padding: 20px;
+    }
+
+    .container h1 {
+        font-size: 3rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 20px;
+        background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .container p {
+        font-size: 1.125rem;
+        color: var(--text-light);
+        max-width: 600px;
+        margin: 0 auto 40px;
+    }
+
+    .options {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+    }
+
+    .option {
+        background-color: white;
+        border-radius: 12px;
+        padding: 30px;
+        width: 350px;
+        text-align: center;
+        transition: all 0.3s ease;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+        border: 2px solid transparent;
+        cursor: pointer;
+    }
+
+    .option:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        border-color: var(--primary-color);
+    }
+
+    .option img {
+        max-width: 200px;
+        height: 200px;
+        object-fit: contain;
+        margin-bottom: 20px;
+    }
+
+    .option h2 {
+        font-size: 1.5rem;
+        margin-bottom: 15px;
+        color: var(--text-dark);
+    }
+
+    .option p {
+        font-size: 1rem;
+        color: var(--text-light);
+        margin-bottom: 25px;
+    }
+
+    .option button {
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        transition: background-color 0.3s ease;
+        cursor: pointer;
+    }
+
+    .option button:hover {
+        background-color: var(--secondary-color);
+    }
+
+    @media (max-width: 768px) {
+        .options {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container h1 {
+            font-size: 2.5rem;
+        }
+    }
+</style>

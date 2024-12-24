@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driver Signup</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
+        import { 
+            getDatabase, 
+            ref, 
+            set,
+            get
+        } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCY5EEAIvuOZzWUWt9NXjEg8KNiM1T6iv4",
+            authDomain: "accident-detection-93371.firebaseapp.com",
+            databaseURL: "https://accident-detection-93371-default-rtdb.asia-southeast1.firebasedatabase.app/",
+            projectId: "accident-detection-93371",
+            storageBucket: "accident-detection-93371.appspot.com",
+            messagingSenderId: "297058775374",
+            appId: "1:297058775374:web:unique-app-id"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // Function to check if email exists
+        async function checkEmailExists(email) {
+            const driversRef = ref(database, 'drivers');
+            const snapshot = await get(driversRef);
+            
+            if (snapshot.exists()) {
+                const drivers = snapshot.val();
+                return Object.values(drivers).some(driver => driver.email === email);
+            }
+            return false;
+        }
+
+        // Function to get the next driver ID
+        async function getNextDriverId() {
+            try {
+                const driversRef = ref(database, 'drivers');
+                const snapshot = await get(driversRef);
+                const drivers = snapshot.val() || {};
+                
+                let maxNumber = 0;
+                Object.keys(drivers).forEach(key => {
+                    if (key.startsWith('driver')) {
+                        const num = parseInt(key.replace('driver', ''));
+                        if (!isNaN(num) && num > maxNumber) {
+                            maxNumber = num;
+                        }
+                    }
+                });
+                
+                return `driver${maxNumber + 1}`;
+            } catch (error) {
+                console.error('Error getting next driver ID:', error);
+                throw error;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById("signup-form");
+            const placesContainer = document.getElementById("places-container");
+            const addPlaceBtn = document.getElementById("add-place-btn");
+            const errorMessage = document.getElementById("error-message");
+            let placeCount = 1;
+
+            addPlaceBtn.addEventListener("click", () => {
+                if (placeCount < 5) {
+                    const newPlaceInput = document.createElement("input");
+                    newPlaceInput.type = "text";
+                    newPlaceInput.className = "place-input";
+                    newPlaceInput.placeholder = `Place ${placeCount + 1}`;
+                    placesContainer.appendChild(newPlaceInput);
+                    placeCount++;
+                } else {
+                    errorMessage.textContent = "You can add up to 5 service areas only.";
+                }
+            });
+
+            form.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                errorMessage.textContent = "";
+
+                const name = document.getElementById("name").value.trim();
+                const mobile = document.getElementById("mobile").value.trim();
+                const email = document.getElementById("email").value.trim();
+                const password = document.getElementById("password").value;
+                const serviceAreas = Array.from(document.querySelectorAll(".place-input"))
+                    .map(input => input.value.trim())
+                    .filter(value => value !== "");
+
+                if (!name || !mobile || !email || !password || serviceAreas.length === 0) {
+                    errorMessage.textContent = "Please fill out all required fields.";
+                    return;
+                }
+
+                try {
+                    // Check if email already exists
+                    const emailExists = await checkEmailExists(email);
+                    if (emailExists) {
+                        errorMessage.textContent = "This email is already registered.";
+                        return;
+                    }
+
+                    // Get the next driver ID
+                    const driverId = await getNextDriverId();
+
+                    // Save driver details
+                    await set(ref(database, `drivers/${driverId}`), {
+                        name,
+                        mobile,
+                        email,
+                        password,
+                        serviceAreas,
+                        registrationDate: new Date().toISOString(),
+                        status: "active"
+                    });
+
+                    alert("Driver registered successfully!");
+                    window.location.href = "DriverLogin.html";
+                } catch (error) {
+                    console.error("Error saving data:", error);
+                    errorMessage.textContent = "An error occurred. Please try again.";
+                }
+            });
+        });
+    </script>
+</head>
+<body>
+    <header>
+        <div class="wrapper header-content">
+            <div class="logo">
+                <img src="../Images/logo.png" alt="Driqars Logo">
+            </div>
+        </div>
+    </header>
+    <div class="signup-container">
+        <a href="DriverLogin.html" class="back-icon">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
+
+        <h1>Driver Registration</h1>
+        <form id="signup-form">
+            <div class="input-row">
+                <div>
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" placeholder="Enter your full name" required>
+                </div>
+                <div>
+                    <label for="mobile">Mobile Number</label>
+                    <input type="text" maxlength="10" id="mobile" placeholder="Enter mobile number" required>
+                </div>
+            </div>
+
+            <div class="input-row">
+                <div>
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" placeholder="Enter your email" required>
+                </div>
+                <div>
+                    <label for="password">Create Password</label>
+                    <input type="password" id="password" placeholder="Create password" required>
+                </div>
+            </div>
+
+            <label for="places">Service Areas</label>
+            <div id="places-container">
+                <input type="text" class="place-input" placeholder="Place 1" required>
+            </div>
+            <button type="button" id="add-place-btn" class="add-place-btn">Add Service Area</button>
+
+            <button type="submit">Create Account</button>
+        </form>
+        <div id="error-message" class="error"></div>
+    </div>
+</body>
+</html>
+
+
+ <style>
+        
+
+        * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f8f8f8;
+    min-height: 100vh;
+    padding: 100px 20px 20px;
+}
+
+/* Header */
+header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: #fff;
+    padding: 15px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+}
+
+header img {
+    max-height: 35px;
+    width: auto;
+}
+
+/* Back Button */
+.back-icon {
+    display: inline-flex;
+    align-items: center;
+    color: #333;
+    text-decoration: none;
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+.back-icon i {
+    margin-right: 8px;
+}
+
+/* Main Container */
+.signup-container {
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 25px;
+}
+
+/* Heading */
+.signup-container h1 {
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+/* Form Elements */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+label {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 4px;
+    display: block;
+    margin-top: 8px;
+}
+
+input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 15px;
+    transition: border-color 0.2s;
+}
+
+input:focus {
+    outline: none;
+    border-color: #3b82f6;
+}
+
+/* Service Areas Section */
+#places-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.place-input {
+    margin-bottom: 5px;
+}
+
+/* Buttons */
+button {
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+button[type="submit"] {
+    background-color: #3b82f6;
+    color: white;
+    margin-top: 10px;
+}
+
+button[type="submit"]:hover {
+    background-color: #2563eb;
+}
+
+.add-place-btn {
+    background-color: #e5e7eb;
+    color: #374151;
+    margin-bottom: 15px;
+}
+
+.add-place-btn:hover {
+    background-color: #d1d5db;
+}
+
+/* Error Message */
+.error {
+    color: #dc2626;
+    font-size: 14px;
+    text-align: center;
+    margin-top: 10px;
+}
+
+/* Responsive Design */
+@media screen and (max-width: 480px) {
+    body {
+        padding: 80px 15px 15px;
+    }
+
+    .signup-container {
+        padding: 20px;
+    }
+
+    header {
+        padding: 10px;
+    }
+
+    header img {
+        max-height: 30px;
+    }
+
+    .signup-container h1 {
+        font-size: 20px;
+        margin-bottom: 20px;
+    }
+
+    input {
+        padding: 8px 10px;
+        font-size: 14px;
+    }
+
+    button {
+        padding: 10px;
+        font-size: 14px;
+    }
+
+    .back-icon {
+        font-size: 13px;
+    }
+}
+
+/* Tablet Design */
+@media screen and (min-width: 481px) and (max-width: 768px) {
+    .signup-container {
+        max-width: 600px;
+        padding: 30px;
+    }
+}
+
+/* Touch Device Optimization */
+@media (hover: none) {
+    button:hover {
+        background-color: initial;
+    }
+
+    button[type="submit"]:hover {
+        background-color: #3b82f6;
+    }
+
+    .add-place-btn:hover {
+        background-color: #e5e7eb;
+    }
+}
+    </style>

@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospital Dashboard</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <img src="../Images/logo.png" alt="Driqars Logo">
+        </div>
+    </header>
+
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <h1>Hospital Dashboard</h1>
+            <div class="hospital-name" id="hospital-name-header"></div>
+        </div>
+        <div class="hospital-info">
+            <div class="info-grid" id="info-grid">
+                <!-- Hospital details will be dynamically inserted here -->
+            </div>
+        </div>
+        <div class="action-buttons">
+            <button class="button button-edit" id="edit-button">
+                <i class="fas fa-edit"></i> Edit
+            </button>
+            <button class="button button-save" id="save-button" style="display: none;">
+                <i class="fas fa-save"></i> Save
+            </button>
+            <button class="button button-logout" id="logout-button">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCY5EEAIvuOZzWUWt9NXjEg8KNiM1T6iv4",
+            authDomain: "accident-detection-93371.firebaseapp.com",
+            databaseURL: "https://accident-detection-93371-default-rtdb.asia-southeast1.firebasedatabase.app/",
+            projectId: "accident-detection-93371",
+            storageBucket: "accident-detection-93371.appspot.com",
+            messagingSenderId: "297058775374",
+            appId: "1:297058775374:web:unique-app-id"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // Retrieve hospital data from localStorage
+        let hospitalData = JSON.parse(localStorage.getItem('hospitalData'));
+
+        if (!hospitalData) {
+            alert('Please log in first.');
+            window.location.href = "HospitalLogin.html";
+        } else {
+            // First, find the hospital key using the email
+            const hospitalRef = database.ref('hospitalDetails');
+            
+            // Set hospital name in header
+            document.getElementById('hospital-name-header').textContent = hospitalData.hospitalName;
+
+            // Populate hospital details
+            const infoGrid = document.getElementById('info-grid');
+            const editButton = document.getElementById('edit-button');
+            const saveButton = document.getElementById('save-button');
+
+            const details = [
+                { key: 'hospitalName', label: 'Hospital Name', value: hospitalData.hospitalName },
+                { key: 'email', label: 'Email', value: hospitalData.email, editable: false },
+                { key: 'place', label: 'Location', value: hospitalData.place, editable: false },
+                { key: 'emptyBeds', label: 'Empty Beds', value: hospitalData.emptyBeds, type: 'number' },
+                { key: 'mobile', label: 'Mobile Number', value: hospitalData.mobile },
+                { key: 'accidentType', label: 'Accident Type', value: hospitalData.accidentType },
+                { key: 'link', label: 'Location Link', value: hospitalData.link, editable: false }
+            ];
+
+            details.forEach(detail => {
+                const infoItem = document.createElement('div');
+                infoItem.classList.add('info-item');
+                
+                // Create input element
+                const input = document.createElement('input');
+                input.id = `edit-${detail.key}`;
+                input.value = detail.value;
+                input.type = detail.type || 'text';
+                input.disabled = detail.editable === false;
+
+                // Create span for display
+                const span = document.createElement('span');
+                span.innerHTML = detail.key === 'link' 
+                    ? `<a href="${detail.value}" target="_blank">View Location</a>` 
+                    : detail.value;
+
+                infoItem.innerHTML = `
+                    <label>${detail.label}</label>
+                `;
+                infoItem.appendChild(span);
+                infoItem.appendChild(input);
+
+                infoGrid.appendChild(infoItem);
+            });
+
+            // Edit button functionality
+            editButton.addEventListener('click', () => {
+                infoGrid.classList.add('edit-mode');
+                editButton.style.display = 'none';
+                saveButton.style.display = 'block';
+
+                details.forEach(detail => {
+                    if (detail.editable !== false) {
+                        const input = document.getElementById(`edit-${detail.key}`);
+                        const span = input.previousElementSibling;
+                        input.style.display = 'block';
+                        span.style.display = 'none';
+                    }
+                });
+            });
+
+            // Save button functionality
+            saveButton.addEventListener('click', () => {
+                // Validate required fields
+                const requiredFields = ['hospitalName', 'place', 'mobile', 'emptyBeds', 'link', 'accidentType'];
+                let isValid = true;
+                let updatedData = {};
+
+                requiredFields.forEach(field => {
+                    const input = document.getElementById(`edit-${field}`);
+                    const value = input.value.trim();
+                    
+                    if (!value) {
+                        isValid = false;
+                        alert(`${field} cannot be empty!`);
+                        return;
+                    }
+
+                    if (field === 'emptyBeds') {
+                        const beds = parseInt(value);
+                        if (isNaN(beds) || beds < 0) {
+                            isValid = false;
+                            alert('Empty beds must be a valid number!');
+                            return;
+                        }
+                        updatedData[field] = beds;
+                    } else {
+                        updatedData[field] = value;
+                    }
+                });
+
+                if (!isValid) return;
+
+                updatedData.email = hospitalData.email;
+
+                // Find the hospital record by email and update it
+                hospitalRef.orderByChild('email').equalTo(hospitalData.email).once('value')
+                    .then((snapshot) => {
+                        if (snapshot.exists()) {
+                            // Get the key of the hospital record
+                            const hospitalKey = Object.keys(snapshot.val())[0];
+                            
+                            // Update the record
+                            return hospitalRef.child(hospitalKey).update(updatedData);
+                        } else {
+                            throw new Error('Hospital record not found');
+                        }
+                    })
+                    .then(() => {
+                        hospitalData = { ...hospitalData, ...updatedData };
+                        localStorage.setItem('hospitalData', JSON.stringify(hospitalData));
+
+                        document.getElementById('hospital-name-header').textContent = updatedData.hospitalName;
+
+                        details.forEach(detail => {
+                            if (detail.editable !== false) {
+                                const input = document.getElementById(`edit-${detail.key}`);
+                                const span = input.previousElementSibling;
+                                
+                                if (detail.key === 'link') {
+                                    span.innerHTML = `<a href="${updatedData[detail.key]}" target="_blank">View Location</a>`;
+                                } else {
+                                    span.textContent = updatedData[detail.key];
+                                }
+                                
+                                input.style.display = 'none';
+                                span.style.display = 'block';
+                            }
+                        });
+
+                        infoGrid.classList.remove('edit-mode');
+                        editButton.style.display = 'block';
+                        saveButton.style.display = 'none';
+
+                        alert('Hospital details updated successfully!');
+                    })
+                    .catch((error) => {
+                        console.error('Error updating hospital details:', error);
+                        alert('Failed to update details: ' + error.message);
+                    });
+            });
+        }
+
+        // Listen for driver visits
+        function listenForDriverVisits() {
+            const visitsRef = database.ref('hospitalVisits');
+            
+            visitsRef.on('child_added', (snapshot) => {
+                const visitData = snapshot.val();
+                if (visitData.hospitalName === hospitalData.hospitalName) {
+                    displayDriverDetails(visitData.driverDetails);
+                }
+            });
+        }
+
+        function displayDriverDetails(driverDetails) {
+            let driversSection = document.getElementById('drivers-section');
+            if (!driversSection) {
+                driversSection = document.createElement('div');
+                driversSection.id = 'drivers-section';
+                driversSection.classList.add('drivers-section');
+                document.querySelector('.dashboard-container').appendChild(driversSection);
+            }
+
+            const driverCard = document.createElement('div');
+            driverCard.classList.add('driver-card');
+            driverCard.innerHTML = `
+                <h3>Recent Driver Visit</h3>
+                <div class="driver-info">
+                    <p><strong>Name:</strong> ${driverDetails.name}</p>
+                    <p><strong>Email:</strong> ${driverDetails.email}</p>
+                    <p><strong>Mobile:</strong> ${driverDetails.mobile}</p>
+                    <p><strong>Service Areas:</strong> ${driverDetails.serviceAreas.join(', ')}</p>
+                </div>
+            `;
+
+            driversSection.insertBefore(driverCard, driversSection.firstChild);
+        }
+
+        // Check database connection
+        function checkDatabaseConnection() {
+            const connectedRef = database.ref('.info/connected');
+            connectedRef.on('value', (snap) => {
+                if (snap.val() === true) {
+                    console.log('Connected to Firebase');
+                } else {
+                    console.log('Not connected to Firebase');
+                }
+            });
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            if (hospitalData) {
+                checkDatabaseConnection();
+                listenForDriverVisits();
+            }
+        });
+
+        // Logout functionality
+        document.getElementById('logout-button').addEventListener('click', () => {
+            localStorage.removeItem('hospitalData');
+            localStorage.removeItem('hospitalKey');
+            window.location.href = "HospitalLogin.html";
+        });
+    </script>
+</body>
+</html>
+
+
+
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    :root {
+        --primary-color: #3498db;
+        --secondary-color: #2ecc71;
+        --background-color: #f4f7f6;
+        --text-color: #2c3e50;
+        --card-background: white;
+    }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--background-color);
+        color: var(--text-color);
+        line-height: 1.6;
+        padding-top: 60px;
+    }
+
+    header {
+        background-color: white;
+        padding: 10px 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+    }
+
+    .logo img {
+        max-height: 40px;
+    }
+
+    .dashboard-container {
+        width: 95%;
+        max-width: 800px;
+        margin: 20px auto;
+        background-color: var(--card-background);
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .dashboard-header {
+        background: linear-gradient(135deg, var(--primary-color), #2980b9);
+        color: white;
+        padding: 20px;
+        border-radius: 12px 12px 0 0;
+        text-align: center;
+    }
+
+    .dashboard-header h1 {
+        font-size: 1.5rem;
+        margin-bottom: 8px;
+    }
+
+    .hospital-info {
+        padding: 20px;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    @media (min-width: 640px) {
+        .info-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    .info-item {
+        background-color: var(--background-color);
+        border-radius: 8px;
+        padding: 15px;
+        transition: transform 0.2s ease;
+    }
+
+    .info-item label {
+        color: var(--primary-color);
+        font-weight: 600;
+        font-size: 0.875rem;
+        display: block;
+        margin-bottom: 6px;
+    }
+
+    .info-item input {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        display: none;
+    }
+
+    .info-item input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        padding: 15px;
+        background-color: #f9f9f9;
+        border-top: 1px solid #e0e0e0;
+        border-radius: 0 0 12px 12px;
+        justify-content: space-between;
+    }
+
+    .button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 16px;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .button-edit {
+        background-color: var(--primary-color);
+        color: white;
+    }
+
+    .button-save {
+        background-color: var(--secondary-color);
+        color: white;
+    }
+
+    .button-logout {
+        background-color: #e74c3c;
+        color: white;
+    }
+
+    .button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    @media (max-width: 480px) {
+        body {
+            padding-top: 50px;
+        }
+
+        .dashboard-container {
+            width: 100%;
+            margin: 10px auto;
+            border-radius: 0;
+        }
+
+        .dashboard-header {
+            border-radius: 0;
+        }
+
+        .dashboard-header h1 {
+            font-size: 1.2rem;
+        }
+
+        .info-item {
+            padding: 10px;
+        }
+
+        .info-item label {
+            font-size: 0.75rem;
+        }
+
+        .info-item input {
+            padding: 6px;
+            font-size: 0.75rem;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+            gap: 8px;
+            padding: 10px;
+        }
+
+        .button {
+            padding: 8px 12px;
+            font-size: 0.8125rem;
+        }
+    }
+
+    .drivers-section {
+        margin-top: 2rem;
+        padding: 1rem;
+        background-color: #f5f5f5;
+        border-radius: 8px;
+    }
+
+    .driver-card {
+        background-color: white;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 6px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .driver-card h3 {
+        margin-top: 0;
+        color: #333;
+        font-size: 1.2rem;
+    }
+
+    .driver-info p {
+        margin: 0.5rem 0;
+        color: #666;
+    }
+
+    .driver-info strong {
+        color: #333;
+    }
+</style>
