@@ -3,11 +3,469 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Driver Signup</title>
+    <title>Ambulance Driver Signup | Accident Rescue</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #e63946; /* Red for urgency */
+            --primary-light: #f5a9b0; /* Light red */
+            --primary-dark: #c82333; /* Darker red for hover states */
+            --secondary-color: #a8dadc; /* Light blue for calmness */
+            --accent-color: #1d3557; /* Dark blue for professionalism */
+            --accent-light: #457b9d; /* Lighter blue for secondary elements */
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+            --background-light: #f8f9fa;
+            --white: #ffffff;
+            --success: #38a169;
+            --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 10px 15px rgba(0, 0, 0, 0.1);
+            --border-radius: 12px;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--background-light);
+            background-image: linear-gradient(to bottom right, rgba(168, 218, 220, 0.1), rgba(29, 53, 87, 0.1));
+            min-height: 100vh;
+            padding: 90px 20px 40px;
+            line-height: 1.6;
+        }
+
+        /* Header */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--accent-color);
+            padding: 15px 0;
+            box-shadow: var(--shadow-sm);
+            z-index: 1000;
+        }
+
+        .wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo img {
+            max-height: 40px;
+        }
+
+        .logo-text {
+            color: var(--white);
+            font-weight: 600;
+            font-size: 1.4rem;
+            margin-left: 10px;
+        }
+
+        /* Back Button */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            color: var(--accent-color);
+            text-decoration: none;
+            font-size: 1rem;
+            font-weight: 500;
+            margin-bottom: 25px;
+            transition: var(--transition);
+            padding: 8px 16px;
+            border-radius: 50px;
+            background-color: var(--white);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .back-link:hover {
+            background-color: var(--accent-color);
+            color: var(--white);
+            transform: translateX(-5px);
+        }
+
+        .back-link i {
+            margin-right: 8px;
+        }
+
+        /* Main Container */
+        .signup-container {
+            background-color: var(--white);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-md);
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .signup-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+        }
+
+        /* Page decoration */
+        .decoration {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background-color: rgba(230, 57, 70, 0.05);
+            z-index: -1;
+        }
+
+        .decoration-1 {
+            top: -100px;
+            right: -100px;
+        }
+
+        .decoration-2 {
+            bottom: -100px;
+            left: -100px;
+            background-color: rgba(29, 53, 87, 0.05);
+        }
+
+        /* Heading */
+        .signup-container h1 {
+            font-size: 2rem;
+            color: var(--accent-color);
+            margin-bottom: 30px;
+            text-align: center;
+            position: relative;
+            padding-bottom: 15px;
+        }
+
+        .signup-container h1::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 3px;
+            background-color: var(--primary-color);
+            border-radius: 3px;
+        }
+
+        /* Form Elements */
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+        }
+
+        .input-row > div {
+            flex: 1;
+        }
+
+        .form-group {
+            position: relative;
+            margin-bottom: 5px;
+        }
+
+        label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            background-color: #f9fafb;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--accent-light);
+            box-shadow: 0 0 0 3px rgba(69, 123, 157, 0.1);
+            background-color: var(--white);
+        }
+
+        .input-icon {
+            position: absolute;
+            right: 15px;
+            top: 42px;
+            color: var(--text-light);
+        }
+
+        /* Service Areas Section */
+        #places-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .service-area-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .service-area-count {
+            font-size: 0.85rem;
+            color: var(--text-light);
+        }
+
+        /* Buttons */
+        button {
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        button[type="submit"] {
+            background-color: var(--primary-color);
+            color: white;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        button[type="submit"]::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: 0.5s;
+            z-index: -1;
+        }
+
+        button[type="submit"]:hover::before {
+            left: 100%;
+        }
+
+        button[type="submit"]:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(230, 57, 70, 0.3);
+        }
+
+        .add-place-btn {
+            background-color: #f3f4f6;
+            color: var(--accent-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 5px;
+            border: 1px dashed #d1d5db;
+        }
+
+        .add-place-btn:hover {
+            background-color: #e5e7eb;
+        }
+
+        /* Error Message */
+        .error {
+            color: var(--primary-color);
+            font-size: 0.9rem;
+            text-align: center;
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            background-color: rgba(230, 57, 70, 0.1);
+            display: none;
+        }
+
+        .error.visible {
+            display: block;
+        }
+
+        /* Animation */
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(230, 57, 70, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(230, 57, 70, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(230, 57, 70, 0);
+            }
+        }
+
+        /* Responsive Design */
+        @media screen and (max-width: 768px) {
+            body {
+                padding: 80px 15px 30px;
+            }
+
+            .signup-container {
+                padding: 30px 20px;
+            }
+
+            .input-row {
+                flex-direction: column;
+                gap: 5px;
+            }
+
+            .signup-container h1 {
+                font-size: 1.8rem;
+            }
+
+            .logo-text {
+                display: none;
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+            body {
+                padding-top: 70px;
+            }
+
+            .signup-container {
+                padding: 25px 15px;
+            }
+
+            header {
+                padding: 10px 0;
+            }
+
+            .header-content {
+                height: 50px;
+            }
+
+            .signup-container h1 {
+                font-size: 1.5rem;
+                margin-bottom: 20px;
+            }
+
+            input {
+                padding: 12px;
+                font-size: 0.9rem;
+            }
+
+            button {
+                padding: 12px;
+                font-size: 0.9rem;
+            }
+
+            .back-link {
+                font-size: 0.9rem;
+                padding: 6px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="wrapper header-content">
+            <div class="logo">
+                <img src="../Images/logo.png" alt="Accident Rescue Logo">
+                <span class="logo-text">Accident Rescue</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="signup-container">
+        <div class="decoration decoration-1"></div>
+        <div class="decoration decoration-2"></div>
+
+        <a href="DriverLogin.html" class="back-link">
+            <i class="fas fa-arrow-left"></i> Back to Login
+        </a>
+
+        <h1>Ambulance Driver Registration</h1>
+        
+        <form id="signup-form">
+            <div class="input-row">
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" placeholder="Enter your full name" required>
+                    <span class="input-icon"><i class="fas fa-user"></i></span>
+                </div>
+                <div class="form-group">
+                    <label for="mobile">Mobile Number</label>
+                    <input type="tel" maxlength="10" id="mobile" placeholder="Enter mobile number" required>
+                    <span class="input-icon"><i class="fas fa-phone"></i></span>
+                </div>
+            </div>
+
+            <div class="input-row">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" placeholder="Enter your email" required>
+                    <span class="input-icon"><i class="fas fa-envelope"></i></span>
+                </div>
+                <div class="form-group">
+                    <label for="password">Create Password</label>
+                    <input type="password" id="password" placeholder="Create password" required>
+                    <span class="input-icon"><i class="fas fa-lock"></i></span>
+                </div>
+            </div>
+
+            <div class="service-area-header">
+                <label for="places">Service Areas</label>
+                <span class="service-area-count" id="service-area-count">1/5 areas added</span>
+            </div>
+            
+            <div id="places-container">
+                <div class="form-group">
+                    <input type="text" class="place-input" placeholder="Enter service area location" required>
+                    <span class="input-icon"><i class="fas fa-map-marker-alt"></i></span>
+                </div>
+            </div>
+            
+            <button type="button" id="add-place-btn" class="add-place-btn">
+                <i class="fas fa-plus-circle"></i> Add Another Service Area
+            </button>
+
+            <button type="submit">
+                <i class="fas fa-user-plus"></i> Create Ambulance Driver Account
+            </button>
+        </form>
+        
+        <div id="error-message" class="error"></div>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
@@ -19,13 +477,13 @@
         } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js";
 
         const firebaseConfig = {
-            apiKey: "AIzaSyCY5EEAIvuOZzWUWt9NXjEg8KNiM1T6iv4",
-            authDomain: "accident-detection-93371.firebaseapp.com",
-            databaseURL: "https://accident-detection-93371-default-rtdb.asia-southeast1.firebasedatabase.app/",
-            projectId: "accident-detection-93371",
-            storageBucket: "accident-detection-93371.appspot.com",
-            messagingSenderId: "297058775374",
-            appId: "1:297058775374:web:unique-app-id"
+            apiKey: "AIzaSyAC324j2gZYCuKKBQZS_qw8LwiMU8i9Rp4",
+            authDomain: "accident-device.firebaseapp.com",
+            databaseURL: "https://accident-device-default-rtdb.asia-southeast1.firebasedatabase.app/",
+            projectId: "accident-device",
+            storageBucket: "accident-device.appspot.com",
+            messagingSenderId: "374234980120",
+            appId: "1:374234980120:web:unique-app-id"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -72,24 +530,37 @@
             const placesContainer = document.getElementById("places-container");
             const addPlaceBtn = document.getElementById("add-place-btn");
             const errorMessage = document.getElementById("error-message");
+            const serviceAreaCount = document.getElementById("service-area-count");
             let placeCount = 1;
 
+            // Update service area count
+            function updateServiceAreaCount() {
+                serviceAreaCount.textContent = `${placeCount}/5 areas added`;
+            }
+
+            // Add new service area input
             addPlaceBtn.addEventListener("click", () => {
                 if (placeCount < 5) {
-                    const newPlaceInput = document.createElement("input");
-                    newPlaceInput.type = "text";
-                    newPlaceInput.className = "place-input";
-                    newPlaceInput.placeholder = `Place ${placeCount + 1}`;
-                    placesContainer.appendChild(newPlaceInput);
+                    const newPlaceDiv = document.createElement("div");
+                    newPlaceDiv.className = "form-group";
+                    newPlaceDiv.innerHTML = `
+                        <input type="text" class="place-input" placeholder="Enter service area location" required>
+                        <span class="input-icon"><i class="fas fa-map-marker-alt"></i></span>
+                    `;
+                    placesContainer.appendChild(newPlaceDiv);
                     placeCount++;
+                    updateServiceAreaCount();
                 } else {
                     errorMessage.textContent = "You can add up to 5 service areas only.";
+                    errorMessage.classList.add("visible");
                 }
             });
 
+            // Handle form submission
             form.addEventListener("submit", async (e) => {
                 e.preventDefault();
                 errorMessage.textContent = "";
+                errorMessage.classList.remove("visible");
 
                 const name = document.getElementById("name").value.trim();
                 const mobile = document.getElementById("mobile").value.trim();
@@ -101,6 +572,7 @@
 
                 if (!name || !mobile || !email || !password || serviceAreas.length === 0) {
                     errorMessage.textContent = "Please fill out all required fields.";
+                    errorMessage.classList.add("visible");
                     return;
                 }
 
@@ -109,6 +581,7 @@
                     const emailExists = await checkEmailExists(email);
                     if (emailExists) {
                         errorMessage.textContent = "This email is already registered.";
+                        errorMessage.classList.add("visible");
                         return;
                     }
 
@@ -131,264 +604,10 @@
                 } catch (error) {
                     console.error("Error saving data:", error);
                     errorMessage.textContent = "An error occurred. Please try again.";
+                    errorMessage.classList.add("visible");
                 }
             });
         });
     </script>
-</head>
-<body>
-    <header>
-        <div class="wrapper header-content">
-            <div class="logo">
-                <img src="../Images/logo.png" alt="Driqars Logo">
-            </div>
-        </div>
-    </header>
-    <div class="signup-container">
-        <a href="DriverLogin.html" class="back-icon">
-            <i class="fas fa-arrow-left"></i> Back
-        </a>
-
-        <h1>Driver Registration</h1>
-        <form id="signup-form">
-            <div class="input-row">
-                <div>
-                    <label for="name">Full Name</label>
-                    <input type="text" id="name" placeholder="Enter your full name" required>
-                </div>
-                <div>
-                    <label for="mobile">Mobile Number</label>
-                    <input type="text" maxlength="10" id="mobile" placeholder="Enter mobile number" required>
-                </div>
-            </div>
-
-            <div class="input-row">
-                <div>
-                    <label for="email">Email Address</label>
-                    <input type="email" id="email" placeholder="Enter your email" required>
-                </div>
-                <div>
-                    <label for="password">Create Password</label>
-                    <input type="password" id="password" placeholder="Create password" required>
-                </div>
-            </div>
-
-            <label for="places">Service Areas</label>
-            <div id="places-container">
-                <input type="text" class="place-input" placeholder="Place 1" required>
-            </div>
-            <button type="button" id="add-place-btn" class="add-place-btn">Add Service Area</button>
-
-            <button type="submit">Create Account</button>
-        </form>
-        <div id="error-message" class="error"></div>
-    </div>
 </body>
 </html>
-
-
- <style>
-        
-
-        * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: 'Inter', sans-serif;
-    background-color: #f8f8f8;
-    min-height: 100vh;
-    padding: 100px 20px 20px;
-}
-
-/* Header */
-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    background-color: #fff;
-    padding: 15px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
-}
-
-header img {
-    max-height: 35px;
-    width: auto;
-}
-
-/* Back Button */
-.back-icon {
-    display: inline-flex;
-    align-items: center;
-    color: #333;
-    text-decoration: none;
-    font-size: 14px;
-    margin-bottom: 20px;
-}
-
-.back-icon i {
-    margin-right: 8px;
-}
-
-/* Main Container */
-.signup-container {
-    background-color: #fff;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    max-width: 500px;
-    margin: 0 auto;
-    padding: 25px;
-}
-
-/* Heading */
-.signup-container h1 {
-    font-size: 24px;
-    color: #333;
-    margin-bottom: 25px;
-    text-align: center;
-}
-
-/* Form Elements */
-form {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-label {
-    font-size: 14px;
-    color: #555;
-    margin-bottom: 4px;
-    display: block;
-    margin-top: 8px;
-}
-
-input {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 15px;
-    transition: border-color 0.2s;
-}
-
-input:focus {
-    outline: none;
-    border-color: #3b82f6;
-}
-
-/* Service Areas Section */
-#places-container {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.place-input {
-    margin-bottom: 5px;
-}
-
-/* Buttons */
-button {
-    padding: 12px;
-    border: none;
-    border-radius: 8px;
-    font-size: 15px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-button[type="submit"] {
-    background-color: #3b82f6;
-    color: white;
-    margin-top: 10px;
-}
-
-button[type="submit"]:hover {
-    background-color: #2563eb;
-}
-
-.add-place-btn {
-    background-color: #e5e7eb;
-    color: #374151;
-    margin-bottom: 15px;
-}
-
-.add-place-btn:hover {
-    background-color: #d1d5db;
-}
-
-/* Error Message */
-.error {
-    color: #dc2626;
-    font-size: 14px;
-    text-align: center;
-    margin-top: 10px;
-}
-
-/* Responsive Design */
-@media screen and (max-width: 480px) {
-    body {
-        padding: 80px 15px 15px;
-    }
-
-    .signup-container {
-        padding: 20px;
-    }
-
-    header {
-        padding: 10px;
-    }
-
-    header img {
-        max-height: 30px;
-    }
-
-    .signup-container h1 {
-        font-size: 20px;
-        margin-bottom: 20px;
-    }
-
-    input {
-        padding: 8px 10px;
-        font-size: 14px;
-    }
-
-    button {
-        padding: 10px;
-        font-size: 14px;
-    }
-
-    .back-icon {
-        font-size: 13px;
-    }
-}
-
-/* Tablet Design */
-@media screen and (min-width: 481px) and (max-width: 768px) {
-    .signup-container {
-        max-width: 600px;
-        padding: 30px;
-    }
-}
-
-/* Touch Device Optimization */
-@media (hover: none) {
-    button:hover {
-        background-color: initial;
-    }
-
-    button[type="submit"]:hover {
-        background-color: #3b82f6;
-    }
-
-    .add-place-btn:hover {
-        background-color: #e5e7eb;
-    }
-}
-    </style>

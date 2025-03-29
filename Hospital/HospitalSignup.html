@@ -8,17 +8,22 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <!-- Firebase Database -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Add your CSS styles here */
+    </style>
 </head>
 <body>
     <header>
         <div class="wrapper header-content">
             <div class="logo">
-                <img src="../Images/logo.png" alt="Driqars Logo">
+                <img src="../Images/logo.png" alt="Accident Rescue Logo">
+                <span class="logo-text">Accident Rescue</span>
             </div>
         </div>
     </header>
+
     <div class="signup-container">
         <a href="HospitalLogin.html" class="back-icon">
             <i class="fas fa-arrow-left"></i> Back
@@ -74,6 +79,23 @@
                 </div>
             </div>
 
+            <!-- Category Selection -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Select Hospital Category (Max 3)</label>
+                    <div class="category-options">
+                        <label><input type="checkbox" name="category" value="Trauma Centers"> Trauma Centers</label>
+                        <label><input type="checkbox" name="category" value="Cardiac Hospitals"> Cardiac Hospitals</label>
+                        <label><input type="checkbox" name="category" value="Burn Centers"> Burn Centers</label>
+                        <label><input type="checkbox" name="category" value="Stroke Centers"> Stroke Centers</label>
+                        <label><input type="checkbox" name="category" value="Pediatric Emergency Hospitals"> Pediatric Emergency Hospitals</label>
+                        <label><input type="checkbox" name="category" value="Orthopedic Emergency Hospitals"> Orthopedic Emergency Hospitals</label>
+                        <label><input type="checkbox" name="category" value="Neurological Emergency Hospitals"> Neurological Emergency Hospitals</label>
+                        <label><input type="checkbox" name="category" value="General Emergency Hospitals"> General Emergency Hospitals</label>
+                    </div>
+                </div>
+            </div>
+
             <button type="submit" class="signup-button">Sign Up</button>
         </form>
     </div>
@@ -81,19 +103,19 @@
     <script>
         // Firebase configuration
         const firebaseConfig = {
-            apiKey: "AIzaSyCY5EEAIvuOZzWUWt9NXjEg8KNiM1T6iv4",
-            authDomain: "accident-detection-93371.firebaseapp.com",
-            databaseURL: "https://accident-detection-93371-default-rtdb.asia-southeast1.firebasedatabase.app/",
-            projectId: "accident-detection-93371",
-            storageBucket: "accident-detection-93371.appspot.com",
-            messagingSenderId: "297058775374",
-            appId: "1:297058775374:web:unique-app-id"
+            apiKey: "AIzaSyAC324j2gZYCuKKBQZS_qw8LwiMU8i9Rp4",
+            authDomain: "accident-device.firebaseapp.com",
+            databaseURL: "https://accident-device-default-rtdb.asia-southeast1.firebasedatabase.app/",
+            projectId: "accident-device",
+            storageBucket: "accident-device.appspot.com",
+            messagingSenderId: "374234980120",
+            appId: "1:374234980120:web:unique-app-id"
         };
-
+    
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
-
+    
         // Function to get the next hospital ID
         async function getNextHospitalId() {
             try {
@@ -114,7 +136,7 @@
                 throw error;
             }
         }
-
+    
         // Handle form submission
         document.getElementById('signup-form').addEventListener('submit', async function (e) {
             e.preventDefault();
@@ -126,13 +148,25 @@
             const mobile = document.getElementById('mobile').value;
             const link = document.getElementById('link').value;
             const accidentType = document.getElementById('accidentType').value;
-
+    
+            // Get selected categories
+            const categoryCheckboxes = document.querySelectorAll('input[name="category"]:checked');
+            const categories = Array.from(categoryCheckboxes).map(checkbox => checkbox.value);
+    
+            // Debugging: Log selected categories
+            console.log('Selected Categories:', categories);
+    
             const errorMessageEl = document.getElementById('error-message');
             if (!hospitalName || !email || !password || !mobile || !emptyBeds || !place || !link || !accidentType) {
                 errorMessageEl.textContent = 'All fields are required.';
                 return;
             }
-
+    
+            if (categories.length > 3) {
+                errorMessageEl.textContent = 'You can select a maximum of 3 categories.';
+                return;
+            }
+    
             try {
                 const hospitalId = await getNextHospitalId();
                 errorMessageEl.textContent = '';
@@ -140,13 +174,14 @@
                     .orderByChild('email')
                     .equalTo(email)
                     .once('value');
-
+    
                 if (emailSnapshot.exists()) {
                     errorMessageEl.textContent = 'This email is already registered.';
                     return;
                 }
-
-                await database.ref(`hospitalDetails/${hospitalId}`).set({
+    
+                // Save hospital data to Firebase
+                const hospitalData = {
                     hospitalName,
                     place,
                     email,
@@ -155,9 +190,15 @@
                     mobile,
                     link,
                     accidentType,
+                    categories, // Include selected categories
                     registrationDate: new Date().toISOString()
-                });
-
+                };
+    
+                // Debugging: Log the data being saved
+                console.log('Data to be saved:', hospitalData);
+    
+                await database.ref(`hospitalDetails/${hospitalId}`).set(hospitalData);
+    
                 alert('Signup successful!');
                 document.getElementById('signup-form').reset();
                 window.location.href = "HospitalLogin.html";
@@ -173,228 +214,284 @@
 
 
 
-
-
 <style>
-   * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
 
-body {
-    font-family: 'Roboto', sans-serif;
-    background-color: #f8f8f8;
-    min-height: 100vh;
-    padding: 100px 20px 20px;
-}
-
-/* Header Styles */
-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    background-color: #fff;
-    padding: 15px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
-}
-
-header img {
-    max-height: 35px;
-    width: auto;
-}
-
-/* Back Button */
-.back-icon {
-    display: inline-flex;
-    align-items: center;
-    color: #333;
-    text-decoration: none;
-    font-size: 14px;
-    margin-bottom: 20px;
-}
-
-.back-icon i {
-    margin-right: 8px;
-}
-
-/* Main Container */
-.signup-container {
-    background-color: #fff;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    max-width: 700px;
-    margin: 0 auto;
-    padding: 25px;
-}
-
-/* Heading */
-.signup-container h1 {
-    font-size: 24px;
-    color: #2c3e50;
-    margin-bottom: 25px;
-    text-align: center;
-    position: relative;
-    padding-bottom: 15px;
-}
-
-.signup-container h1::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 50px;
-    height: 3px;
-    background-color: #3498db;
-    border-radius: 2px;
-}
-
-/* Form Layout */
-form {
+.category-options {
     display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.form-row {
-    display: flex;
-    gap: 20px;
     flex-wrap: wrap;
-}
-
-.form-group {
-    flex: 1;
-    min-width: 250px;
-}
-
-/* Form Elements */
-label {
-    display: block;
-    margin-bottom: 8px;
-    color: #555;
-    font-size: 14px;
-    font-weight: 500;
-}
-
-input,select {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 15px;
-    transition: border-color 0.2s;
-}
-
-input:focus {
-    outline: none;
-    border-color: #3498db;
-    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
-}
-select:focus {
-    outline: none;
-    border-color: #3498db;
-    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
-}
-
-/* Button */
-.signup-button {
-    background-color: #3498db;
-    color: white;
-    padding: 14px;
-    border: none;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.2s;
+    gap: 10px;
     margin-top: 10px;
 }
 
-.signup-button:hover {
-    background-color: #2980b9;
+.category-options label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.9rem;
+    color: var(--text-dark);
 }
 
-/* Error Message */
-#error-message {
-    color: #e74c3c;
-    font-size: 14px;
-    text-align: center;
-    margin: 10px 0;
+.category-options input[type="checkbox"] {
+    margin: 0;
 }
 
-/* Responsive Design */
-@media screen and (max-width: 768px) {
+
+    :root {
+        --primary-color: #e63946; /* Red for urgency */
+        --primary-light: #f5a9b0; /* Light red */
+        --primary-dark: #c82333; /* Darker red for hover states */
+        --secondary-color: #a8dadc; /* Light blue for calmness */
+        --accent-color: #1d3557; /* Dark blue for professionalism */
+        --accent-light: #457b9d; /* Lighter blue for secondary elements */
+        --text-dark: #1f2937;
+        --text-light: #6b7280;
+        --background-light: #f8f9fa;
+        --white: #ffffff;
+        --success: #38a169;
+        --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 10px 15px rgba(0, 0, 0, 0.1);
+        --border-radius: 12px;
+        --transition: all 0.3s ease;
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Montserrat', sans-serif;
+    }
+
     body {
-        padding: 80px 15px 15px;
+        background-color: var(--background-light);
+        background-image: linear-gradient(to bottom right, rgba(168, 218, 220, 0.1), rgba(29, 53, 87, 0.1));
+        min-height: 100vh;
+        padding: 90px 20px 40px;
+        line-height: 1.6;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
 
-    .signup-container {
-        padding: 20px;
-    }
-
+    /* Header */
     header {
-        padding: 10px;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background-color: var(--accent-color);
+        padding: 15px 0;
+        box-shadow: var(--shadow-sm);
+        z-index: 1000;
     }
 
-    header img {
-        max-height: 30px;
+    .wrapper {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px;
+    }
+
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        height: 60px;
+    }
+
+    .logo {
+        display: flex;
+        align-items: center;
+    }
+
+    .logo img {
+        max-height: 40px;
+    }
+
+    .logo-text {
+        color: var(--white);
+        font-weight: 600;
+        font-size: 1.4rem;
+        margin-left: 10px;
+    }
+
+    /* Main Container */
+    .signup-container {
+        background-color: var(--white);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-md);
+        max-width: 700px;
+        width: 100%;
+        padding: 40px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .signup-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 6px;
+        background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+    }
+
+    /* Heading */
+    .signup-container h1 {
+        font-size: 2rem;
+        color: var(--accent-color);
+        margin-bottom: 30px;
+        text-align: center;
+        position: relative;
+        padding-bottom: 15px;
+    }
+
+    .signup-container h1::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80px;
+        height: 3px;
+        background-color: var(--primary-color);
+        border-radius: 3px;
+    }
+
+    /* Form Layout */
+    form {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
     }
 
     .form-row {
-        flex-direction: column;
-        gap: 15px;
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
     }
 
     .form-group {
-        min-width: 100%;
+        flex: 1;
+        min-width: 250px;
     }
 
-    .signup-container h1 {
-        font-size: 20px;
-        margin-bottom: 20px;
+    /* Form Elements */
+    label {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: var(--text-dark);
+        margin-bottom: 8px;
+        display: block;
     }
 
-    input {
-        padding: 10px;
-        font-size: 14px;
+    input, select {
+        width: 100%;
+        padding: 14px 16px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: all 0.3s;
+        background-color: #f9fafb;
     }
 
+    input:focus, select:focus {
+        outline: none;
+        border-color: var(--accent-light);
+        box-shadow: 0 0 0 3px rgba(69, 123, 157, 0.1);
+        background-color: var(--white);
+    }
+
+    /* Button */
     .signup-button {
-        padding: 12px;
-        font-size: 15px;
+        background-color: var(--primary-color);
+        color: white;
+        padding: 14px;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+        z-index: 1;
     }
 
-    .back-icon {
-        font-size: 13px;
+    .signup-button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: 0.5s;
+        z-index: -1;
     }
-}
 
-/* Touch Device Optimization */
-@media (hover: none) {
+    .signup-button:hover::before {
+        left: 100%;
+    }
+
     .signup-button:hover {
-        background-color: #3498db;
+        background-color: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(230, 57, 70, 0.3);
     }
 
-    input:hover {
-        border-color: #ddd;
-    }
-}
-
-/* Landscape Mode Optimization */
-@media screen and (max-height: 600px) {
-    body {
-        padding: 70px 15px 15px;
-    }
-
-    .signup-container {
-        padding: 15px;
+    /* Error Message */
+    #error-message {
+        color: var(--primary-color);
+        font-size: 0.9rem;
+        text-align: center;
+        margin-top: 15px;
+        padding: 10px;
+        border-radius: 8px;
+        background-color: rgba(230, 57, 70, 0.1);
+        display: none;
     }
 
-    .form-row {
-        gap: 10px;
+    #error-message.visible {
+        display: block;
     }
-}
+
+    /* Responsive Design */
+    @media screen and (max-width: 768px) {
+        body {
+            padding: 80px 15px 30px;
+        }
+
+        .signup-container {
+            padding: 30px 20px;
+        }
+
+        .signup-container h1 {
+            font-size: 1.8rem;
+        }
+    }
+
+    @media screen and (max-width: 480px) {
+        body {
+            padding-top: 70px;
+        }
+
+        .signup-container {
+            padding: 25px 15px;
+        }
+
+        .signup-container h1 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+        }
+
+        input, select {
+            padding: 12px;
+            font-size: 0.9rem;
+        }
+
+        .signup-button {
+            padding: 12px;
+            font-size: 0.9rem;
+        }
+    }
 </style>

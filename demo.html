@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emergency Cases</title>
+    <!-- Use Firebase v8 for compatibility -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+</head>
+<body>
+    <div class="accidents-container">
+        <h2>Active Emergency Cases</h2>
+        <div id="active-accident"></div>
+    </div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAC324j2...",
+            authDomain: "accident-device.firebaseapp.com",
+            databaseURL: "https://accident-device-default-rtdb.asia-southeast1.firebasedatabase.app/",
+            projectId: "accident-device",
+            storageBucket: "accident-device.appspot.com",
+            messagingSenderId: "374234980120",
+            appId: "1:374234980120:web:unique-app-id"
+        };
+        </script>
+        <script>
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        function fetchAccidentLocation() {
+            const accidentRef = database.ref('accident/location');
+            accidentRef.once('value').then(snapshot => {
+                if (snapshot.exists()) {
+                    const location = snapshot.val();
+                    displayAccident(location);
+                } else {
+                    document.getElementById('active-accident').innerHTML = "No active accidents";
+                }
+            }).catch(error => {
+                console.error("Error fetching data:", error);
+            });
+        }
+
+        function displayAccident(location) {
+            const [latitude, longitude] = location.split(',').map(coord => coord.trim());
+            const accidentDiv = document.getElementById('active-accident');
+            accidentDiv.innerHTML = `
+                <p><strong>Accident Location:</strong> ${latitude}, ${longitude}</p>
+                <button onclick="openGoogleMaps(${latitude}, ${longitude})">Show Route</button>
+            `;
+        }
+
+        function openGoogleMaps(lat, lng) {
+            const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+            window.open(url, '_blank');
+        }
+
+        fetchAccidentLocation();
+    </script>
+</body>
+</html>

@@ -3,96 +3,407 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="../Style/DriverLogin.css">
     <title>Hospital Login</title>
-    <!-- Include Firebase App (Required for all Firebase features) -->
+    <!-- Firebase Scripts -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <!-- Include Firebase Database (Required for Realtime Database) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-  </head>
+    <style>
+        :root {
+            --primary-color: #e63946; /* Red for urgency */
+            --primary-light: #f5a9b0; /* Light red */
+            --primary-dark: #c82333; /* Darker red for hover states */
+            --secondary-color: #a8dadc; /* Light blue for calmness */
+            --accent-color: #1d3557; /* Dark blue for professionalism */
+            --accent-light: #457b9d; /* Lighter blue for secondary elements */
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+            --background-light: #f8f9fa;
+            --white: #ffffff;
+            --success: #38a169;
+            --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 10px 15px rgba(0, 0, 0, 0.1);
+            --border-radius: 12px;
+            --transition: all 0.3s ease;
+        }
 
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        body {
+            background-color: var(--background-light);
+            background-image: linear-gradient(to bottom right, rgba(168, 218, 220, 0.1), rgba(29, 53, 87, 0.1));
+            min-height: 100vh;
+            padding: 90px 20px 40px;
+            line-height: 1.6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Header */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--accent-color);
+            padding: 15px 0;
+            box-shadow: var(--shadow-sm);
+            z-index: 1000;
+        }
+
+        .wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo img {
+            max-height: 40px;
+        }
+
+        .logo-text {
+            color: var(--white);
+            font-weight: 600;
+            font-size: 1.4rem;
+            margin-left: 10px;
+        }
+
+        /* Main Container */
+        .login-container {
+            background-color: var(--white);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-md);
+            max-width: 500px;
+            width: 100%;
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+        }
+
+        /* Heading */
+        .login-container h1 {
+            font-size: 2rem;
+            color: var(--accent-color);
+            margin-bottom: 30px;
+            text-align: center;
+            position: relative;
+            padding-bottom: 15px;
+        }
+
+        .login-container h1::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 3px;
+            background-color: var(--primary-color);
+            border-radius: 3px;
+        }
+
+        /* Form Elements */
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group {
+            position: relative;
+            margin-bottom: 5px;
+        }
+
+        label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            background-color: #f9fafb;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--accent-light);
+            box-shadow: 0 0 0 3px rgba(69, 123, 157, 0.1);
+            background-color: var(--white);
+        }
+
+        .input-icon {
+            position: absolute;
+            right: 15px;
+            top: 42px;
+            color: var(--text-light);
+        }
+
+        /* Buttons */
+        button {
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        button[type="submit"] {
+            background-color: var(--primary-color);
+            color: white;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        button[type="submit"]::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: 0.5s;
+            z-index: -1;
+        }
+
+        button[type="submit"]:hover::before {
+            left: 100%;
+        }
+
+        button[type="submit"]:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(230, 57, 70, 0.3);
+        }
+
+        .signup-link {
+            text-align: center;
+            margin-top: 1.5rem;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .signup-link a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+
+        .signup-link a:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
+        }
+
+        .error-message {
+            color: var(--primary-color);
+            font-size: 0.9rem;
+            text-align: center;
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            background-color: rgba(230, 57, 70, 0.1);
+            display: none;
+        }
+
+        .error-message.visible {
+            display: block;
+        }
+
+        /* Responsive Design */
+        @media screen and (max-width: 768px) {
+            body {
+                padding: 80px 15px 30px;
+            }
+
+            .login-container {
+                padding: 30px 20px;
+            }
+
+            .login-container h1 {
+                font-size: 1.8rem;
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+            body {
+                padding-top: 70px;
+            }
+
+            .login-container {
+                padding: 25px 15px;
+            }
+
+            .login-container h1 {
+                font-size: 1.5rem;
+                margin-bottom: 20px;
+            }
+
+            input {
+                padding: 12px;
+                font-size: 0.9rem;
+            }
+
+            button {
+                padding: 12px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+  </head>
   <body>
     <header>
-        <div class="logo">
-            <img src="../Images/logo.png" alt="Driqars Logo">
+        <div class="wrapper header-content">
+            <div class="logo">
+                <img src="../Images/logo.png" alt="Accident Rescue Logo">
+                <span class="logo-text">Accident Rescue</span>
+            </div>
         </div>
     </header>
-    <form class="form" id="login-form">
-        <a href="../index.html" class="back-icon">
-            <i class="fas fa-arrow-left"></i> Back
-        </a>
-        <div class="flex-column">
-            <label>Email</label>
-        </div>
-        <div class="inputForm">
-            <input type="text" id="email" class="input" placeholder="Enter your Email" required>
-        </div>
-    
-        <div class="flex-column">
-            <label>Password</label>
-        </div>
-        <div class="inputForm">
-            <input type="password" id="password" class="input" placeholder="Enter your Password" required>
-        </div>
-    
-       
-        <button type="submit" class="button-submit">Sign In</button></a>
-        <p class="p">Don't have an account? <span class="span"><a href="./HospitalSignup.html">Sign Up</a></span></p>
+
+    <div class="login-container">
+        <h1>Hospital Secure Login</h1>
         
-    </form>
+        <form id="login-form">
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" placeholder="Enter your email" required>
+                <span class="input-icon"><i class="fas fa-envelope"></i></span>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" placeholder="Enter your password" required>
+                <span class="input-icon"><i class="fas fa-lock"></i></span>
+            </div>
+            
+            <button type="submit">
+                <i class="fas fa-sign-in-alt"></i> Sign In
+            </button>
+            
+            <div id="error-message" class="error-message"></div>
+        </form>
+        
+        <p class="signup-link">
+            New hospital? <a href="./HospitalSignup.html">Register here</a>
+        </p>
+    </div>
 
     <script>
         // Firebase configuration
         const firebaseConfig = {
-            apiKey: "AIzaSyCY5EEAIvuOZzWUWt9NXjEg8KNiM1T6iv4",
-            authDomain: "accident-detection-93371.firebaseapp.com",
-            databaseURL: "https://accident-detection-93371-default-rtdb.asia-southeast1.firebasedatabase.app/",
-            projectId: "accident-detection-93371",
-            storageBucket: "accident-detection-93371.appspot.com",
-            messagingSenderId: "297058775374",
-            appId: "1:297058775374:web:unique-app-id"
+            apiKey: "AIzaSyAC324j2gZYCuKKBQZS_qw8LwiMU8i9Rp4",
+            authDomain: "accident-device.firebaseapp.com",
+            databaseURL: "https://accident-device-default-rtdb.asia-southeast1.firebasedatabase.app/",
+            projectId: "accident-device",
+            storageBucket: "accident-device.appspot.com",
+            messagingSenderId: "374234980120",
+            appId: "1:374234980120:web:unique-app-id"
         };
-    
+
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
-    
-        // Handle form submission
-        document.getElementById('login-form').addEventListener('submit', function (e) {
+
+        // Error message display function
+        function showError(message) {
+            const errorElement = document.getElementById('error-message');
+            errorElement.textContent = message;
+            errorElement.classList.add('visible');
+            
+            // Auto hide after 5 seconds
+            setTimeout(() => {
+                errorElement.classList.remove('visible');
+            }, 5000);
+        }
+
+        document.getElementById('login-form').addEventListener('submit', function(e) {
             e.preventDefault();
-    
+            
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-    
+            
+            // Show loading state
+            const button = document.querySelector('button[type="submit"]');
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+            button.disabled = true;
+            
             database.ref('hospitalDetails').once('value')
                 .then((snapshot) => {
                     let isValid = false;
-                    let hospitalData = null;
-    
+                    let userData = null;
+                    
                     snapshot.forEach((childSnapshot) => {
-                        const userData = childSnapshot.val();
-                        if (userData.email === email && userData.password === password) {
+                        const data = childSnapshot.val();
+                        if (data.email === email && data.password === password) {
                             isValid = true;
-                            hospitalData = userData; // Store the logged-in hospital data
+                            userData = data;
                         }
                     });
-    
-                    if (isValid && hospitalData) {
+                    
+                    if (isValid && userData) {
+                        // Save user details in localStorage
+                        localStorage.setItem('hospitalData', JSON.stringify(userData));
                         
-                        // Save hospital data to localStorage
-                        localStorage.setItem('hospitalData', JSON.stringify(hospitalData));
-                        window.location.href = "HospitalDashboard.html"; // Redirect to dashboard
+                        // Redirect with a slight delay for better UX
+                        button.innerHTML = '<i class="fas fa-check"></i> Success!';
+                        setTimeout(() => {
+                            window.location.href = "HospitalDashboard.html";
+                        }, 1000);
                     } else {
-                        alert('Invalid email or password.');
+                        button.innerHTML = originalText;
+                        button.disabled = false;
+                        showError('Invalid email or password. Please try again.');
                     }
                 })
                 .catch((error) => {
                     console.error('Error fetching data:', error);
-                    alert('An error occurred. Please try again.');
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                    showError('Connection error. Please check your internet and try again.');
                 });
         });
     </script>
-    
   </body>
 </html>

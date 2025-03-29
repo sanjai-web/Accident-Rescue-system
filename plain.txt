@@ -1,151 +1,380 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Driver Dashboard</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
-        }
-        .container {
-            padding: 20px;
-            background-color: white;
-            margin: 20px auto;
-            width: 90%;
-            max-width: 500px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        }
-        h1 {
-            text-align: center;
-            color: #333;
-        }
-        label {
-            font-weight: bold;
-        }
-        .form-group {
-            margin: 10px 0;
-        }
-        input {
-            width: calc(100% - 20px);
-            padding: 10px;
-            margin: 5px 0;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        .button {
-            display: block;
-            width: 100%;
-            padding: 10px;
-            margin-top: 10px;
-            background-color: #007BFF;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        .button:hover {
-            background-color: #0056b3;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Welcome, Driver!</h1>
-        <div id="details">
-            <div class="form-group">
-                <label for="name">Name:</label>
-                <input type="text" id="name" disabled>
-            </div>
-            <div class="form-group">
-                <label for="email">Email:</label>
-                <input type="text" id="email" disabled>
-            </div>
-            <div class="form-group">
-                <label for="mobile">Mobile:</label>
-                <input type="text" id="mobile" disabled>
-            </div>
-            <div class="form-group">
-                <label for="places">Places:</label>
-                <input type="text" id="places" disabled>
-            </div>
-        </div>
-        <button class="button" id="edit-button">Edit</button>
-        <button class="button" id="save-button" style="display: none;">Save</button>
-        <button class="button" id="logout-button">Logout</button>
-    </div>
+   <script>
+  // Firebase configuration
+const firebaseConfig = {
+    apiKey: "AIzaSyAC324j2gZYCuKKBQZS_qw8LwiMU8i9Rp4",
+    authDomain: "accident-device.firebaseapp.com",
+    databaseURL: "https://accident-device-default-rtdb.asia-southeast1.firebasedatabase.app/",
+    projectId: "accident-device",
+    storageBucket: "accident-device.appspot.com",
+    messagingSenderId: "374234980120",
+    appId: "1:374234980120:web:unique-app-id"
+};
 
-    <script>
-        // Fetch driver data from localStorage
-        const driverData = JSON.parse(localStorage.getItem('driverData'));
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
 
-        const nameField = document.getElementById('name');
-        const emailField = document.getElementById('email');
-        const mobileField = document.getElementById('mobile');
-        const placesField = document.getElementById('places');
-        const editButton = document.getElementById('edit-button');
-        const saveButton = document.getElementById('save-button');
+// Fetch driver data from localStorage
+const driverData = JSON.parse(localStorage.getItem('driverData'));
 
-        if (driverData) {
-            // Display driver details
-            nameField.value = driverData.name;
-            emailField.value = driverData.email;
-            mobileField.value = driverData.mobile;
-            placesField.value = driverData.places.join(', ');
+// Initialize DOM elements
+const nameField = document.getElementById('name');
+const emailField = document.getElementById('email');
+const mobileField = document.getElementById('mobile');
+const serviceAreasInput = document.getElementById('serviceAreas-input');
+const serviceAreasButtonsContainer = document.getElementById('serviceAreas-buttons');
+const hospitalsContainer = document.getElementById('hospitals-container');
+const editButton = document.getElementById('edit-button');
+const saveButton = document.getElementById('save-button');
+
+// Set initial driver data
+if (driverData) {
+    nameField.value = driverData.name;
+    emailField.value = driverData.email;
+    mobileField.value = driverData.mobile;
+    serviceAreasInput.value = driverData.serviceAreas.join(', ');
+    renderserviceAreasButtons(driverData.serviceAreas);
+} else {
+    alert('Please log in first.');
+    window.location.href = "DriverLogin.html";
+}
+
+// Listen for all types of accidents
+function listenForAllAccidents() {
+    // Listen for manually reported accidents
+    const manualAccidentsRef = database.ref('accidents');
+    // Listen for device-detected accidents
+    const deviceAccidentsRef = database.ref('accident/location');
+
+    // Handle manually reported accidents
+    manualAccidentsRef.on('child_added', (snapshot) => {
+        const accident = snapshot.val();
+        const accidentId = snapshot.key;
+
+        if (accident.status === 'active') {
+            const responders = accident.responders || [];
+            if (!responders.includes(driverData.email)) {
+                const timeElapsed = Math.floor((Date.now() - accident.timestamp) / 1000 / 60);
+
+                if (timeElapsed > 40) {
+                    manualAccidentsRef.child(accidentId).remove()
+                        .then(() => console.log(`Accident ${accidentId} removed due to exceeding 40 minutes.`))
+                        .catch((error) => console.error('Error removing accident:', error));
+                } else {
+                    displayManualAccident({
+                        ...accident,
+                        accidentId,
+                        timestamp: accident.timestamp
+                    });
+                }
+            }
+        }
+    });
+
+    // Handle device-detected accidents
+    deviceAccidentsRef.on('value', (snapshot) => {
+        if (snapshot.exists()) {
+            const location = snapshot.val();
+            displayDeviceAccident(location);
         } else {
-            // If no data found, redirect to login
-            alert('Please log in first.');
-            window.location.href = "DriverLogin.html";
+            document.getElementById('active-accident').innerHTML = '<p>No device-detected accidents</p>';
         }
+    });
 
-        // Enable edit mode
-        editButton.addEventListener('click', () => {
-            nameField.disabled = false;
-            mobileField.disabled = false;
-            placesField.disabled = false;
-            editButton.style.display = 'none';
-            saveButton.style.display = 'block';
+    // Handle manual accident updates
+    manualAccidentsRef.on('child_changed', (snapshot) => {
+        const accident = snapshot.val();
+        const accidentId = snapshot.key;
+        const responders = accident.responders || [];
+        
+        if (accident.status !== 'active' || responders.includes(driverData.email)) {
+            removeAccidentFromDisplay(accidentId, 'manual');
+        } else {
+            displayManualAccident({
+                ...accident,
+                accidentId,
+                timestamp: accident.timestamp
+            });
+        }
+    });
+
+    // Handle manual accident removals
+    manualAccidentsRef.on('child_removed', (snapshot) => {
+        removeAccidentFromDisplay(snapshot.key, 'manual');
+    });
+}
+
+// Announce emergency
+      // Add this function at the beginning of your script
+      function announceEmergency() {
+    // Create speech synthesis utterance
+    const message = new SpeechSynthesisUtterance("Emergency Accident Detected");
+    message.volume = 1; // 0 to 1
+    message.rate = 1;   // 0.1 to 10
+    message.pitch = 1;  // 0 to 2
+    
+    // Use speech synthesis to speak the message
+    window.speechSynthesis.speak(message);
+}
+// Display manual accident
+function displayManualAccident(accident) {
+    const activeAccidentsDiv = document.getElementById('active-accidents');
+    const existingAccidentDiv = document.getElementById(`accident-${accident.accidentId}`);
+    
+    if (existingAccidentDiv) {
+        existingAccidentDiv.remove();
+    }
+
+    const accidentDiv = document.createElement('div');
+    accidentDiv.id = `accident-${accident.accidentId}`;
+    accidentDiv.className = 'accident-card';
+
+    const timeElapsed = Math.floor((Date.now() - accident.timestamp) / 1000 / 60);
+
+    accidentDiv.innerHTML = `
+        <div class="accident-info">
+            <h3>Manual Emergency Case: ${accident.accidentId}</h3>
+            <p class="time-elapsed">Time Elapsed: ${timeElapsed} minutes</p>
+        </div>
+        <button class="emergency-button" onclick="respondToAccident('${accident.accidentId}', ${accident.latitude}, ${accident.longitude}, 'manual')">
+            Respond to Emergency
+        </button>
+    `;
+
+    activeAccidentsDiv.appendChild(accidentDiv);
+    announceEmergency();
+}
+
+// Display device accident
+function displayDeviceAccident(location) {
+    const [latitude, longitude] = location.split(',').map(coord => coord.trim());
+    const accidentDiv = document.getElementById('active-accident');
+    const accidentId = 'device-' + Date.now();
+
+    accidentDiv.innerHTML = `
+        <div class="accident-card">
+            <div class="accident-info">
+                <h3>Device Detected Emergency</h3>
+                <p><strong>Location:</strong> ${latitude}, ${longitude}</p>
+            </div>
+            <button class="emergency-button" onclick="respondToAccident('${accidentId}', ${latitude}, ${longitude}, 'device')">
+                Respond to Emergency
+            </button>
+        </div>
+    `;
+    announceEmergency();
+}
+
+// Remove accident from display
+function removeAccidentFromDisplay(accidentId, type) {
+    const containerId = type === 'manual' ? 'active-accidents' : 'active-accident';
+    const container = document.getElementById(containerId);
+    const accidentDiv = document.getElementById(`accident-${accidentId}`);
+    
+    if (accidentDiv) {
+        accidentDiv.remove();
+    }
+
+    // If it's the device container and it's now empty, show the "no accidents" message
+    if (type === 'device' && container.children.length === 0) {
+        container.innerHTML = '<p>No device-detected accidents</p>';
+    }
+}
+
+// Respond to accident
+function respondToAccident(accidentId, latitude, longitude, type) {
+    if (!("geolocation" in navigator)) {
+        alert('Geolocation is not supported by your browser.');
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const { latitude: driverLat, longitude: driverLng } = position.coords;
+
+            if (type === 'manual') {
+                // Update Firebase for manually reported accidents
+                const accidentRef = database.ref(`accidents/${accidentId}`);
+                accidentRef.child('responders').once('value', (snapshot) => {
+                    const responders = snapshot.val() || [];
+                    if (!responders.includes(driverData.email)) {
+                        responders.push(driverData.email);
+                        accidentRef.update({ responders });
+                    }
+                });
+            }
+
+            // Open Google Maps with directions
+            const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${driverLat},${driverLng}&destination=${latitude},${longitude}&travelmode=driving`;
+            window.open(googleMapsUrl, '_blank');
+            removeAccidentFromDisplay(accidentId, type);
+        },
+        (error) => alert(`Unable to get current location. Error: ${error.message}`)
+    );
+}
+
+// Render service areas
+function renderserviceAreasButtons(serviceAreas, editMode = false) {
+    serviceAreasButtonsContainer.innerHTML = '';
+    serviceAreas.forEach((place, index) => {
+        const card = document.createElement('div');
+        card.classList.add('service-area-card');
+
+        const cardContent = `
+            <div class="service-area-name">${place}</div>
+            ${editMode ? '<button class="remove-button">Remove</button>' : ''}
+        `;
+
+        card.innerHTML = cardContent;
+
+        if (!editMode) {
+            card.addEventListener('click', () => fetchHospitalsInPlace(place));
+        } else {
+            const removeButton = card.querySelector('.remove-button');
+            removeButton.addEventListener('click', () => {
+                serviceAreas.splice(index, 1);
+                renderserviceAreasButtons(serviceAreas, true);
+                serviceAreasInput.value = serviceAreas.join(', ');
+            });
+        }
+        serviceAreasButtonsContainer.appendChild(card);
+    });
+}
+
+// Fetch hospitals in area
+function fetchHospitalsInPlace(place) {
+    hospitalsContainer.innerHTML = `<h2>Hospitals in ${place}</h2>`;
+    database.ref('hospitalDetails').orderByChild('place').equalTo(place).once('value')
+        .then((snapshot) => {
+            const hospitals = snapshot.val();
+            if (hospitals) {
+                Object.keys(hospitals).forEach(key => {
+                    const hospital = hospitals[key];
+                    const hospitalCard = document.createElement('div');
+                    hospitalCard.classList.add('hospital-card');
+                    hospitalCard.innerHTML = `
+                        <div>
+                            <div class="hospital-name">${hospital.hospitalName}</div>
+                            <div class="hospital-details">
+                                <strong>Mobile: </strong> ${hospital.mobile}<br>
+                                <strong>Empty Beds: </strong> ${hospital.emptyBeds}<br>
+                                <strong>Accident Type: </strong>${hospital.accidentType}
+                            </div>
+                        </div>
+                        <div>
+                            <button class="locate-button" onclick="openGoogleMapsDirections('${hospital.hospitalName}', '${hospital.link}')">Locate</button>
+                        </div>
+                    `;
+                    hospitalsContainer.appendChild(hospitalCard);
+                });
+            } else {
+                hospitalsContainer.innerHTML += '<p>No hospitals found in this location.</p>';
+            }
+        })
+        .catch((error) => {
+            console.error('Error fetching hospitals:', error);
+            hospitalsContainer.innerHTML += '<p>Error fetching hospitals. Please try again.</p>';
         });
+}
 
-        // Save changes
-        saveButton.addEventListener('click', () => {
-            const updatedData = {
-                ...driverData,
-                name: nameField.value,
-                mobile: mobileField.value,
-                places: placesField.value.split(',').map(place => place.trim())
-            };
+// Open Google Maps directions
+function openGoogleMapsDirections(hospitalName, hospitalLink) {
+    if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const { latitude, longitude } = position.coords;
+                const encodedHospitalLink = encodeURIComponent(hospitalLink);
+                const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${latitude},${longitude}&destination=${encodedHospitalLink}&travelmode=driving`;
 
-            // Update localStorage
+                // Send driver details to Firebase
+                const driverRef = database.ref('hospitalVisits').push();
+                const visitData = {
+                    driverDetails: {
+                        name: driverData.name,
+                        email: driverData.email,
+                        mobile: driverData.mobile,
+                        serviceAreas: driverData.serviceAreas
+                    },
+                    hospitalName: hospitalName,
+                    timestamp: Date.now()
+                };
+
+                driverRef.set(visitData)
+                    .then(() => {
+                        window.open(googleMapsUrl, '_blank');
+                    })
+                    .catch((error) => {
+                        console.error('Error sending driver details:', error);
+                        window.open(googleMapsUrl, '_blank');
+                    });
+            },
+            (error) => {
+                alert(`Unable to get current location. Opening hospital location directly.\nError: ${error.message}`);
+                window.open(hospitalLink, '_blank');
+            }
+        );
+    } else {
+        alert('Geolocation is not supported by your browser. Opening hospital location directly.');
+        window.open(hospitalLink, '_blank');
+    }
+}
+
+// Event Listeners
+editButton.addEventListener('click', () => {
+    nameField.disabled = false;
+    mobileField.disabled = false;
+    serviceAreasInput.disabled = false;
+    renderserviceAreasButtons(serviceAreasInput.value.split(',').map(place => place.trim()), true);
+    editButton.style.display = 'none';
+    saveButton.style.display = 'block';
+});
+
+saveButton.addEventListener('click', () => {
+    const updatedServiceAreas = serviceAreasInput.value.split(',').map(place => place.trim()).filter(place => place !== '');
+    const updatedData = {
+        name: nameField.value,
+        mobile: mobileField.value,
+        email: driverData.email,
+        serviceAreas: updatedServiceAreas
+    };
+
+    // Update in Firebase Database
+    const driverRef = database.ref('drivers').orderByChild('email').equalTo(driverData.email);
+
+    driverRef.once('value')
+        .then((snapshot) => {
+            if (snapshot.exists()) {
+                const driverKey = Object.keys(snapshot.val())[0];
+                return database.ref('drivers/' + driverKey).update(updatedData);
+            } else {
+                throw new Error('Driver not found in database');
+            }
+        })
+        .then(() => {
             localStorage.setItem('driverData', JSON.stringify(updatedData));
-
-            // Optionally, update Firebase (uncomment below if Firebase write is needed)
-            /*
-            const database = firebase.database();
-            database.ref(`drivers/${driverData.id}`).update(updatedData)
-                .then(() => alert('Details updated successfully!'))
-                .catch(error => console.error('Error updating data:', error));
-            */
-
-            alert('Details updated successfully!');
-
             nameField.disabled = true;
             mobileField.disabled = true;
-            placesField.disabled = true;
+            serviceAreasInput.disabled = true;
+            renderserviceAreasButtons(updatedServiceAreas);
             editButton.style.display = 'block';
             saveButton.style.display = 'none';
+            alert('Details updated successfully!');
+        })
+        .catch((error) => {
+            console.error('Error updating driver details:', error);
+            alert('Failed to update details. Please try again.');
         });
+});
 
-        // Logout button functionality
-        document.getElementById('logout-button').addEventListener('click', () => {
-            localStorage.removeItem('driverData'); // Clear driver data
-            window.location.href = "DriverLogin.html"; // Redirect to login page
-        });
-    </script>
-</body>
-</html>
+document.getElementById('logout-button').addEventListener('click', () => {
+    localStorage.removeItem('driverData');
+    window.location.href = "DriverLogin.html";
+});
+
+// Start listening for accidents when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    if (driverData) {
+        listenForAllAccidents();
+    }
+});
+</script>
